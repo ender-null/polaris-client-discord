@@ -28,7 +28,7 @@ export class Bot {
     this.user = new User(
       this.bot.user.id,
       this.bot.user.username,
-      this.bot.user.discriminator ? `#${this.bot.user.discriminator}` : null,
+      this.bot.user.discriminator != '0' ? `#${this.bot.user.discriminator}` : null,
       this.bot.user.tag,
       this.bot.user.bot,
     );
@@ -89,7 +89,7 @@ export class Bot {
     const sender = new User(
       msg.author.id,
       msg.author.username,
-      msg.author.discriminator ? `#${msg.author.discriminator}` : null,
+      msg.author.discriminator != '0' ? `#${msg.author.discriminator}` : null,
       msg.author.tag,
       msg.author.bot,
     );
@@ -119,7 +119,7 @@ export class Bot {
     const sender = new User(
       msg.user.id,
       msg.user.username,
-      msg.user.discriminator ? `#${msg.user.discriminator}` : null,
+      msg.user.discriminator != '0' ? `#${msg.user.discriminator}` : null,
       msg.user.tag,
       msg.user.bot,
     );
