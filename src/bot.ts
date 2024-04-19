@@ -25,6 +25,14 @@ export class Bot {
   }
 
   async init() {
+    this.user = new User(
+      this.bot.user.id,
+      this.bot.user.username,
+      this.bot.user.discriminator,
+      this.bot.user.tag,
+      this.bot.user.bot,
+    );
+    this.config = JSON.parse(process.env.CONFIG);
     this.bot.user.setPresence({
       status: 'online',
       activities: [
@@ -34,14 +42,6 @@ export class Bot {
         },
       ],
     });
-    this.user = new User(
-      this.bot.user.id,
-      this.bot.user.username,
-      this.bot.user.discriminator,
-      this.bot.user.tag,
-      this.bot.user.bot,
-    );
-    this.config = JSON.parse(process.env.CONFIG);
     const data: WSInit = {
       bot: this.user.username,
       platform: 'discord',
