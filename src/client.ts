@@ -51,7 +51,7 @@ client.on('messageCreate', async (message: DiscordMessage) => {
 
 const poll = () => {
   logger.info('Starting polling...');
-  ws = new WebSocket('ws://localhost:8080');
+  ws = new WebSocket(process.env.SERVER);
   bot = new Bot(ws, client);
 
   clearInterval(pingInterval);
