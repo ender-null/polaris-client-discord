@@ -80,12 +80,12 @@ const poll = () => {
     process.exit();
   });
 
-  ws.on('message', (data: string) => {
+  ws.on('message', async (data: string) => {
     try {
       const msg = JSON.parse(data);
       logger.info(JSON.stringify(msg, null, 4));
       if (msg.type === 'message') {
-        bot.sendMessage(msg.message);
+        await bot.sendMessage(msg.message);
       }
     } catch (error) {
       catchException(error);
@@ -93,9 +93,6 @@ const poll = () => {
   });
 };
 
-client.on('ready', () => {
-  logger.info(`Logged in as ${client.user.tag}!`);
-  poll();
-});
+client.on('ready', poll);
 
 client.login(process.env.DISCORD_TOKEN);

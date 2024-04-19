@@ -1,8 +1,8 @@
 import WebSocket from 'ws';
 import { Conversation, Extra, Message, User, WSBroadcast, WSInit, WSPing } from './types';
 import { Config } from './config';
-import { fromBase64, htmlToDiscordMarkdown, isInt, linkRegExp, logger, splitLargeMessage } from './utils';
-import { Stream } from 'node:stream';
+import { htmlToDiscordMarkdown, linkRegExp, logger, splitLargeMessage } from './utils';
+
 import {
   ActivityType,
   AttachmentBuilder,
@@ -139,7 +139,7 @@ export class Bot {
       let chat;
       try {
         if (msg.extra.originalMessage) {
-          chat = msg.extra.originalMessage.channel;
+          chat = await this.bot.channels.fetch(msg.extra.originalMessage.channelId);
         } else if (String(msg.conversation.id).startsWith('-')) {
           chat = await this.bot.channels.fetch(String(msg.conversation.id).slice(1));
         } else {
@@ -150,7 +150,6 @@ export class Bot {
         return;
       }
       if (chat) {
-        // chat.startTyping();
         if (msg.type == 'text') {
           // let content = this.addDiscordMentions(msg.content);
           let content = msg.content;
@@ -210,21 +209,7 @@ export class Bot {
             await chat.send(embed);
           }
         }
-        // chat.stopTyping(true);
       }
-    }
-  }
-
-  async getInputFile(content: string): Promise<string | Stream | Buffer> {
-    if (content.startsWith('/')) {
-      const file = await fromBase64(content);
-      return file.name;
-    } else if (content.startsWith('http')) {
-      return content;
-    } else if (isInt(content)) {
-      return content;
-    } else {
-      return content;
     }
   }
 }
