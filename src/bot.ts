@@ -18,18 +18,22 @@ export class Bot {
   config: Config;
   websocket: WebSocket;
   bot: Client;
+  interactions: ChatInputCommandInteraction<CacheType>[];
 
   constructor(websocket: WebSocket, bot: Client) {
     this.websocket = websocket;
     this.bot = bot;
+    this.interactions = [];
   }
 
   async init() {
     this.user = new User(
       this.bot.user.id,
-      this.bot.user.username,
-      this.bot.user.discriminator != '0' ? `#${this.bot.user.discriminator}` : null,
-      this.bot.user.tag,
+      this.bot.user.globalName.length ? this.bot.user.globalName : this.bot.user.username,
+      null,
+      this.bot.user.discriminator != '0'
+        ? `${this.bot.user.username}#${this.bot.user.discriminator}`
+        : this.bot.user.username,
       this.bot.user.bot,
     );
     this.config = JSON.parse(process.env.CONFIG);
@@ -88,9 +92,9 @@ export class Bot {
     const conversation = new Conversation('-' + msg.channel.id);
     const sender = new User(
       msg.author.id,
-      msg.author.username,
-      msg.author.discriminator != '0' ? `#${msg.author.discriminator}` : null,
-      msg.author.tag,
+      msg.author.globalName ? msg.author.globalName : msg.author.username,
+      null,
+      msg.author.discriminator != '0' ? `${msg.author.username}#${msg.author.discriminator}` : msg.author.username,
       msg.author.bot,
     );
     const reply = null;
@@ -110,31 +114,34 @@ export class Bot {
   async convertInteraction(msg: ChatInputCommandInteraction<CacheType>): Promise<Message> {
     const id = msg.id;
     const extra: Extra = {
-      originalMessage: msg,
+      interaction: true,
     };
-    const content = msg.commandName;
+    const content = `${this.config.prefix}${msg.commandName}`;
     const type = 'text';
     const date = msg.createdTimestamp;
     const reply = null;
     const sender = new User(
       msg.user.id,
+      msg.user.globalName ? msg.user.globalName : msg.user.username,
+      null,
       msg.user.username,
-      msg.user.discriminator != '0' ? `#${msg.user.discriminator}` : null,
-      msg.user.tag,
       msg.user.bot,
     );
     const conversation = new Conversation('-' + msg.channel.id);
     const channel = await this.bot.channels.fetch(msg.channel.id);
     if (channel.constructor.name == 'DMChannel') {
-      conversation.id = channel['recipient']['id'];
-      conversation.title = channel['recipient']['username'];
-    } else {
-      conversation.title = channel['name'];
+      conversation.id = channel['recipientId'];
     }
+    this.interactions.push(msg);
     return new Message(id, conversation, sender, content, type, date, reply, extra);
   }
 
   async sendMessage(msg: Message): Promise<void> {
+    let interaction;
+    if (msg.reply.extra.interaction) {
+      interaction = this.interactions.find((interaction) => interaction.id === msg.reply.id);
+      this.interactions.splice(this.interactions.indexOf(interaction), 1);
+    }
     if (msg.content) {
       let chat;
       try {
@@ -165,13 +172,17 @@ export class Bot {
           if (content.length > 2000) {
             const texts = splitLargeMessage(content, 2000);
             for (const text of texts) {
-              await chat.send(text);
+              if (interaction) {
+                await interaction.reply(text);
+              } else {
+                await chat.send(text);
+              }
             }
           } else {
-            const message = await chat.send(content);
-            if (msg.type == 'text' && msg.extra.addPing) {
-              const ping = message.createdTimestamp - msg.extra.originalMessage.createdTimestamp;
-              message.edit(msg.content + `\n\`${ping.toFixed(3)}\``);
+            if (interaction) {
+              await interaction.reply(content);
+            } else {
+              await chat.send(content);
             }
           }
         } else if (msg.type == 'photo' || msg.type == 'document' || msg.type == 'video' || msg.type == 'voice') {
@@ -189,9 +200,17 @@ export class Bot {
           if (sendContent) {
             if (msg.content.startsWith('/') || msg.content.startsWith('C:\\')) {
               const file = new AttachmentBuilder(msg.content);
-              await chat.send({ files: [file] });
+              if (interaction) {
+                await interaction.reply({ files: [file] });
+              } else {
+                await chat.send({ files: [file] });
+              }
             } else {
-              await chat.send(msg.content);
+              if (interaction) {
+                await interaction.reply(msg.content);
+              } else {
+                await chat.send(msg.content);
+              }
             }
           } else {
             if (msg.content.startsWith('/') || msg.content.startsWith('C:\\')) {
@@ -206,7 +225,11 @@ export class Bot {
             } else {
               embed.setURL(msg.content);
             }
-            await chat.send(embed);
+            if (interaction) {
+              await interaction.reply(embed);
+            } else {
+              await chat.send(embed);
+            }
           }
         }
       }

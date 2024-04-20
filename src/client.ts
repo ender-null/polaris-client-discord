@@ -2,7 +2,7 @@ import WebSocket from 'ws';
 import { Bot } from './bot';
 import { WSMessage } from './types';
 import { catchException, logger } from './utils';
-import { Client, GatewayIntentBits, Message as DiscordMessage, Partials } from 'discord.js';
+import { Client, GatewayIntentBits, Message as DiscordMessage, Partials, Interaction, CacheType } from 'discord.js';
 
 let bot: Bot;
 let ws: WebSocket;
@@ -36,6 +36,18 @@ const client = new Client({
     GatewayIntentBits.DirectMessageTyping,
   ],
   partials: [Partials.Message, Partials.Channel],
+});
+
+client.on('interactionCreate', async (interaction: Interaction<CacheType>) => {
+  if (!interaction.isChatInputCommand()) return;
+  const msg = await bot.convertInteraction(interaction);
+  const data: WSMessage = {
+    bot: 'polaris',
+    platform: 'discord',
+    type: 'message',
+    message: msg,
+  };
+  ws.send(JSON.stringify(data));
 });
 
 client.on('messageCreate', async (message: DiscordMessage) => {

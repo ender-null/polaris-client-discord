@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Config } from './config';
 
 export interface ApiKeys {
@@ -160,6 +161,7 @@ export interface Extra {
   viaBotUserId?: number | string;
   restrictionReason?: string;
   replyMarkup?: any;
+  interaction?: boolean;
 }
 
 export class BroadcastMessage {
