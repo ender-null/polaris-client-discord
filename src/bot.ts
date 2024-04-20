@@ -29,7 +29,7 @@ export class Bot {
   async init() {
     this.user = new User(
       this.bot.user.id,
-      this.bot.user.globalName.length ? this.bot.user.globalName : this.bot.user.username,
+      this.bot.user.globalName ? this.bot.user.globalName : this.bot.user.username,
       null,
       this.bot.user.discriminator != '0'
         ? `${this.bot.user.username}#${this.bot.user.discriminator}`
