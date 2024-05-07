@@ -21,15 +21,18 @@ export const htmlToDiscordMarkdown = (text: string): string => {
     const replacements = [
       { pattern: '<code class="language-([\\w]+)">([\\S\\s]+)</code>', sub: '```$1\n$2```' },
       { pattern: '<a href="(.[^<]+)">(.[^<]+)</a>', sub: '$1' },
-      { pattern: '<blockquote>(.[^<]+)</blockquote>', sub: '> $1' },
       { pattern: '<[/]?i>', sub: '_' },
       { pattern: '<[/]?b>', sub: '**' },
       { pattern: '<[/]?u>', sub: '__' },
       { pattern: '<[/]?code>', sub: '`' },
       { pattern: '<[/]?pre>', sub: '```' },
     ];
+
     replacements.map((rep) => {
       text = text.replace(new RegExp(rep['pattern'], 'gim'), rep['sub']);
+    });
+    text = text.replace(new RegExp('<blockquote>(.*?)</blockquote>', 'gim'), (_, p1) => {
+      return '> ' + p1.replace(/\n/g, '\n> ');
     });
     text = text.replace(new RegExp('&lt;', 'gim'), '<');
     text = text.replace(new RegExp('&gt;', 'gim'), '>');
