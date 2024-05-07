@@ -21,6 +21,7 @@ export const htmlToDiscordMarkdown = (text: string): string => {
     const replacements = [
       { pattern: '<code class="language-([\\w]+)">([\\S\\s]+)</code>', sub: '```$1\n$2```' },
       { pattern: '<a href="(.[^<]+)">(.[^<]+)</a>', sub: '$1' },
+      { pattern: '<blockquote>(.[^<]+)</blockquote>', sub: '> $1' },
       { pattern: '<[/]?i>', sub: '_' },
       { pattern: '<[/]?b>', sub: '**' },
       { pattern: '<[/]?u>', sub: '__' },
