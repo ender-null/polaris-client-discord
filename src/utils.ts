@@ -18,24 +18,18 @@ export const replaceHtml = (text: string): string => {
 
 export const htmlToDiscordMarkdown = (text: string): string => {
   if (text) {
-    const replacements = [
-      { pattern: '<code class="language-([\\w]+)">([\\S\\s]+)</code>', sub: '```$1\n$2```' },
-      { pattern: '<a href="(.[^<]+)">(.[^<]+)</a>', sub: '$1' },
-      { pattern: '<[/]?i>', sub: '_' },
-      { pattern: '<[/]?b>', sub: '**' },
-      { pattern: '<[/]?u>', sub: '__' },
-      { pattern: '<[/]?code>', sub: '`' },
-      { pattern: '<[/]?pre>', sub: '```' },
-    ];
+    text = text.replace(/<a href="(.*?)">(.*?)<\/a>/gim, '$1');
+    text = text.replace(/<i>(.*?)<\/i>/gim, '_$1_');
+    text = text.replace(/<b>(.*?)<\/b>/gim, '**$1**');
+    text = text.replace(/<u>(.*?)<\/u>/gim, '__$1__');
+    text = text.replace(/<code>(.*?)<\/code>/gim, '`$1`');
+    text = text.replace(/<pre>(.*?)<\/pre>/gim, '```$1```');
+    text = text.replace(/<blockquote>([\s\S]*?)<\/blockquote>/gim, (_, p1) => {
+      return '> ' + p1.replace(/\r?\n/g, '\n> ').trim();
+    });
 
-    replacements.map((rep) => {
-      text = text.replace(new RegExp(rep['pattern'], 'gim'), rep['sub']);
-    });
-    text = text.replace(new RegExp('<blockquote>(.*?)</blockquote>', 'gim'), (_, p1) => {
-      return '> ' + p1.replace(/\n/g, '\n> ');
-    });
-    text = text.replace(new RegExp('&lt;', 'gim'), '<');
-    text = text.replace(new RegExp('&gt;', 'gim'), '>');
+    text = text.replace(/&lt;/gim, '<');
+    text = text.replace(/&gt;/gim, '>');
   }
   return text;
 };
