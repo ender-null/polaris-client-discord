@@ -104,7 +104,9 @@ const poll = () => {
   ws.on('message', async (data: string) => {
     try {
       const msg = JSON.parse(data);
-      logger.info(JSON.stringify(msg, null, 4));
+      if (msg.type !== 'pong') {
+        logger.info(JSON.stringify(msg, null, 4));
+      }
       if (msg.type === 'message') {
         await bot.sendMessage(msg.message);
       }
