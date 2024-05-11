@@ -8,10 +8,6 @@ let bot: Bot;
 let ws: WebSocket;
 let pingInterval;
 
-logger.debug(`SERVER: ${process.env.SERVER}`);
-logger.debug(`TOKEN: ${process.env.DISCORD_TOKEN}`);
-logger.debug(`CONFIG: ${process.env.CONFIG}`);
-
 const close = () => {
   logger.warn(`Close server`);
   ws.terminate();
@@ -23,6 +19,19 @@ process.on('SIGTERM', () => close());
 process.on('exit', () => {
   logger.warn(`Exit process`);
 });
+
+if (!process.env.SERVER || process.env.DISCORD_TOKEN || process.env.CONFIG) {
+  if (!process.env.SERVER) {
+    logger.warn(`Missing env variable SERVER`);
+  }
+  if (!process.env.CONFIG) {
+    logger.warn(`Missing env variable CONFIG`);
+  }
+  if (!process.env.DISCORD_TOKEN) {
+    logger.warn(`Missing env variable DISCORD_TOKEN`);
+  }
+  close();
+}
 
 const client = new Client({
   intents: [
