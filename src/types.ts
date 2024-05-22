@@ -195,6 +195,12 @@ export interface WSMessage extends WSData {
   message: Message;
 }
 
+export interface WSCommand extends WSData {
+  type: 'command';
+  method: string;
+  payload: WSCommandPayload;
+}
+
 export interface WSPing extends WSData {
   type: 'ping';
 }
@@ -206,5 +212,5 @@ export interface WSBroadcast extends WSData {
 }
 
 export interface WSCommandPayload {
-  [id: string]: string | number | boolean;
+  [id: string]: string | number | boolean | any[];
 }

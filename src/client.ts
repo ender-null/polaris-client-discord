@@ -109,6 +109,8 @@ const poll = () => {
       }
       if (msg.type === 'message') {
         await bot.sendMessage(msg.message);
+      } else if (msg.type === 'command') {
+        bot.handleCommand(msg);
       }
     } catch (error) {
       catchException(error);

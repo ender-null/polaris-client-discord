@@ -1,5 +1,5 @@
 import WebSocket from 'ws';
-import { Conversation, Extra, Message, User, WSBroadcast, WSInit, WSPing } from './types';
+import { Conversation, Extra, Message, User, WSBroadcast, WSCommand, WSInit, WSPing } from './types';
 import { Config } from './config';
 import { htmlToDiscordMarkdown, linkRegExp, logger, splitLargeMessage } from './utils';
 
@@ -11,6 +11,8 @@ import {
   Client,
   Message as DiscordMessage,
   EmbedBuilder,
+  REST,
+  Routes,
 } from 'discord.js';
 
 export class Bot {
@@ -235,6 +237,29 @@ export class Bot {
           }
         }
       }
+    }
+  }
+
+  async handleCommand(msg: WSCommand): Promise<void> {
+    if (msg.method === 'setCommands') {
+      const commands: any[] = (msg.payload.commands as any[]).map((command) => {
+        return {
+          name: command.command,
+          description: command.description,
+          type: 1,
+          options: command.parameters.map((param) => {
+            return {
+              name: param.name,
+              required: param.required,
+              type: 3,
+            };
+          }),
+        };
+      });
+      const rest = new REST({ version: '10' }).setToken(this.config.apiKeys.discordBotToken);
+      await rest.put(Routes.applicationCommands(this.config.apiKeys.discordClientId.toString()), { body: commands });
+    } else {
+      logger.error('Unsupported method');
     }
   }
 }
