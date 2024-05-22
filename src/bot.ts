@@ -1,5 +1,5 @@
 import WebSocket from 'ws';
-import { Conversation, Extra, Message, User, WSBroadcast, WSCommand, WSInit, WSPing } from './types';
+import { Conversation, Extra, Message, ParameterType, User, WSBroadcast, WSCommand, WSInit, WSPing } from './types';
 import { Config } from './config';
 import { htmlToDiscordMarkdown, linkRegExp, logger, splitLargeMessage } from './utils';
 
@@ -251,15 +251,29 @@ export class Bot {
             return {
               name: param.name,
               required: param.required,
-              type: 3,
+              type: this.getParameterType(param.type),
             };
           }),
         };
       });
+
       const rest = new REST({ version: '10' }).setToken(this.config.apiKeys.discordBotToken);
       await rest.put(Routes.applicationCommands(this.config.apiKeys.discordClientId.toString()), { body: commands });
     } else {
       logger.error('Unsupported method');
     }
+  }
+
+  getParameterType(type: ParameterType): number {
+    if (type === 'integer') {
+      return 4;
+    } else if (type === 'boolean') {
+      return 5;
+    } else if (type === 'user') {
+      return 6;
+    } else if (type === 'number') {
+      return 10;
+    }
+    return 3;
   }
 }
