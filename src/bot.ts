@@ -1,5 +1,16 @@
 import WebSocket from 'ws';
-import { Conversation, Extra, Message, ParameterType, User, WSBroadcast, WSCommand, WSInit, WSPing } from './types';
+import {
+  Command,
+  Conversation,
+  Extra,
+  Message,
+  ParameterType,
+  User,
+  WSBroadcast,
+  WSCommand,
+  WSInit,
+  WSPing,
+} from './types';
 import { Config } from './config';
 import { htmlToDiscordMarkdown, linkRegExp, logger, splitLargeMessage } from './utils';
 
@@ -242,12 +253,13 @@ export class Bot {
 
   async handleCommand(msg: WSCommand): Promise<void> {
     if (msg.method === 'setCommands') {
-      const commands: any[] = (msg.payload.commands as any[]).map((command) => {
+      const commands: any[] = (msg.payload.commands as any[]).map((command: Command) => {
         return {
           name: command.command,
           description: command.description,
           type: 1,
-          options: command.parameters.map((param) => {
+          integration_types: [0, 1],
+          options: command.parameters?.map((param) => {
             return {
               name: param.name,
               required: param.required,
