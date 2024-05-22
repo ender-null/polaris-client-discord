@@ -20,7 +20,7 @@ export const htmlToDiscordMarkdown = (text: string): string => {
   if (text) {
     text = text.replace(/<a href="([\s\S]*?)">([\s\S]*?)<\/a>/gim, '$1');
     text = text.replace(/<i>([\s\S]*?)<\/i>/gim, '_$1_');
-    text = text.replace(/<b>([\s\S]*?)<\/b>/gim, '*$1*');
+    text = text.replace(/<b>([\s\S]*?)<\/b>/gim, '**$1**');
     text = text.replace(/<u>([\s\S]*?)<\/u>/gim, '~$1~');
     text = text.replace(/<code>([\s\S]*?)<\/code>/gim, '`$1`');
     text = text.replace(/<pre>([\s\S]*?)<\/pre>/gim, '```$1```');

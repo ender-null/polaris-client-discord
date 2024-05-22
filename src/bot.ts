@@ -131,7 +131,12 @@ export class Bot {
     const extra: Extra = {
       interaction: true,
     };
-    const content = `${this.config.prefix}${msg.commandName}`;
+    let content = `${this.config.prefix}${msg.commandName}`;
+    if (msg.options.data.length) {
+      for (const param of msg.options.data) {
+        content += ' ' + param.value;
+      }
+    }
     const type = 'text';
     const date = msg.createdTimestamp;
     const reply = null;
@@ -261,7 +266,8 @@ export class Bot {
           integration_types: [0, 1],
           options: command.parameters?.map((param) => {
             return {
-              name: param.name,
+              name: param.name.replace(/\s/gim, '_'),
+              description: param.name,
               required: param.required,
               type: this.getParameterType(param.type),
             };
