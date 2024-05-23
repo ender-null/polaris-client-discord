@@ -23,6 +23,7 @@ export const htmlToDiscordMarkdown = (text: string): string => {
     text = text.replace(/<b>([\s\S]*?)<\/b>/gim, '**$1**');
     text = text.replace(/<u>([\s\S]*?)<\/u>/gim, '~$1~');
     text = text.replace(new RegExp('<code class="language-([\\w]+)">([\\S\\s]+)</code>', 'gim'), '```$1\n$2```');
+    text = text.replace(/<code>([\s\S]*?)<\/code>/gim, '`$1`');
     text = text.replace(/<pre>([\s\S]*?)<\/pre>/gim, '```$1```');
     text = text.replace(
       /<blockquote>([\s\S]*?)<\/blockquote>/gim,
