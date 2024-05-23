@@ -158,10 +158,15 @@ export class Bot {
       msg.user.username,
       msg.user.bot,
     );
-    const conversation = new Conversation('-' + msg.channel.id);
-    const channel = await this.bot.channels.fetch(msg.channel.id);
-    if (channel.constructor.name == 'DMChannel') {
-      conversation.id = channel['recipientId'];
+    const channelId = msg.channelId || msg.channel.id;
+    const conversation = new Conversation('-' + channelId, channelId);
+    try {
+      const channel = await this.bot.channels.fetch(channelId);
+      if (channel.constructor.name == 'DMChannel') {
+        conversation.id = channel['recipientId'];
+      }
+    } catch (error) {
+      logger.error(error.message);
     }
     this.interactions.push(msg);
     return new Message(id, conversation, sender, content, type, date, reply, extra);
@@ -187,82 +192,80 @@ export class Bot {
         logger.error(`${e.message} ${msg.conversation.id}`);
         return;
       }
-      if (chat) {
-        if (msg.type == 'text') {
-          let content = msg.content;
-          if (msg.extra) {
-            if (msg.extra.format == 'HTML') {
-              content = htmlToDiscordMarkdown(content);
-            }
-            if (msg.extra.preview !== undefined && !msg.extra.preview) {
-              content = content.replace(linkRegExp, '<$&>');
-            }
-            if (content.indexOf(this.config.prefix) > -1) {
-              content = this.addDiscordSlashCommands(content);
+      if (msg.type == 'text') {
+        let content = msg.content;
+        if (msg.extra) {
+          if (msg.extra.format == 'HTML') {
+            content = htmlToDiscordMarkdown(content);
+          }
+          if (msg.extra.preview !== undefined && !msg.extra.preview) {
+            content = content.replace(linkRegExp, '<$&>');
+          }
+          if (content.indexOf(this.config.prefix) > -1) {
+            content = this.addDiscordSlashCommands(content);
+          }
+        }
+
+        if (content.length > 2000) {
+          const texts = splitLargeMessage(content, 2000);
+          for (const text of texts) {
+            if (interaction) {
+              await interaction.reply(text);
+            } else if (chat) {
+              await chat.send(text);
             }
           }
+        } else {
+          if (interaction) {
+            await interaction.reply(content);
+          } else {
+            await chat.send(content);
+          }
+        }
+      } else if (msg.type == 'photo' || msg.type == 'document' || msg.type == 'video' || msg.type == 'voice') {
+        let sendContent = true;
+        const embed = new EmbedBuilder();
 
-          if (content.length > 2000) {
-            const texts = splitLargeMessage(content, 2000);
-            for (const text of texts) {
-              if (interaction) {
-                await interaction.reply(text);
-              } else {
-                await chat.send(text);
-              }
+        if (msg.extra && 'caption' in msg.extra && msg.extra['caption']) {
+          const lines = msg.extra['caption'].split('\n');
+          embed.setTitle(lines[0]);
+          lines.splice(0, 1);
+          embed.setDescription(lines.join('\n'));
+          sendContent = false;
+        }
+
+        if (sendContent) {
+          if (msg.content.startsWith('/') || msg.content.startsWith('C:\\')) {
+            const file = new AttachmentBuilder(msg.content);
+            if (interaction) {
+              await interaction.reply({ files: [file] });
+            } else if (chat) {
+              await chat.send({ files: [file] });
             }
           } else {
             if (interaction) {
-              await interaction.reply(content);
-            } else {
-              await chat.send(content);
+              await interaction.reply(msg.content);
+            } else if (chat) {
+              await chat.send(msg.content);
             }
           }
-        } else if (msg.type == 'photo' || msg.type == 'document' || msg.type == 'video' || msg.type == 'voice') {
-          let sendContent = true;
-          const embed = new EmbedBuilder();
-
-          if (msg.extra && 'caption' in msg.extra && msg.extra['caption']) {
-            const lines = msg.extra['caption'].split('\n');
-            embed.setTitle(lines[0]);
-            lines.splice(0, 1);
-            embed.setDescription(lines.join('\n'));
-            sendContent = false;
-          }
-
-          if (sendContent) {
-            if (msg.content.startsWith('/') || msg.content.startsWith('C:\\')) {
-              const file = new AttachmentBuilder(msg.content);
-              if (interaction) {
-                await interaction.reply({ files: [file] });
-              } else {
-                await chat.send({ files: [file] });
-              }
-            } else {
-              if (interaction) {
-                await interaction.reply(msg.content);
-              } else {
-                await chat.send(msg.content);
-              }
+        } else {
+          if (msg.content.startsWith('/') || msg.content.startsWith('C:\\')) {
+            const file = new AttachmentBuilder(msg.content);
+            await chat.send({ embeds: [embed], files: [file] });
+          } else if (msg.content.startsWith('http')) {
+            if (msg.type == 'photo') {
+              embed.setImage(msg.content);
             }
+          } else if (msg.type == 'video') {
+            embed.setURL(msg.content);
           } else {
-            if (msg.content.startsWith('/') || msg.content.startsWith('C:\\')) {
-              const file = new AttachmentBuilder(msg.content);
-              await chat.send({ embeds: [embed], files: [file] });
-            } else if (msg.content.startsWith('http')) {
-              if (msg.type == 'photo') {
-                embed.setImage(msg.content);
-              }
-            } else if (msg.type == 'video') {
-              embed.setURL(msg.content);
-            } else {
-              embed.setURL(msg.content);
-            }
-            if (interaction) {
-              await interaction.reply(embed);
-            } else {
-              await chat.send(embed);
-            }
+            embed.setURL(msg.content);
+          }
+          if (interaction) {
+            await interaction.reply(embed);
+          } else if (chat) {
+            await chat.send(embed);
           }
         }
       }
