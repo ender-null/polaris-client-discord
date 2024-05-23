@@ -16,12 +16,15 @@ import { htmlToDiscordMarkdown, linkRegExp, logger, splitLargeMessage } from './
 
 import {
   ActivityType,
+  ApplicationCommand,
   AttachmentBuilder,
   CacheType,
   ChatInputCommandInteraction,
   Client,
+  Collection,
   Message as DiscordMessage,
   EmbedBuilder,
+  GuildResolvable,
   REST,
   Routes,
 } from 'discord.js';
@@ -32,6 +35,12 @@ export class Bot {
   websocket: WebSocket;
   bot: Client;
   interactions: ChatInputCommandInteraction<CacheType>[];
+  commands: Collection<
+    string,
+    ApplicationCommand<{
+      guild: GuildResolvable;
+    }>
+  >;
 
   constructor(websocket: WebSocket, bot: Client) {
     this.websocket = websocket;
@@ -55,10 +64,12 @@ export class Bot {
       activities: [
         {
           name: `${this.config.prefix}help`,
-          type: ActivityType.Listening,
+          state: `⭐ ${this.config.prefix}help`,
+          type: ActivityType.Custom,
         },
       ],
     });
+    this.commands = await this.bot.application.commands.fetch();
     const data: WSInit = {
       bot: this.user.username,
       platform: 'discord',
@@ -178,14 +189,16 @@ export class Bot {
       }
       if (chat) {
         if (msg.type == 'text') {
-          // let content = this.addDiscordMentions(msg.content);
           let content = msg.content;
           if (msg.extra) {
-            if ('format' in msg.extra && msg.extra['format'] == 'HTML') {
+            if (msg.extra.format == 'HTML') {
               content = htmlToDiscordMarkdown(content);
             }
-            if ('preview' in msg.extra && !msg.extra['preview']) {
+            if (msg.extra.preview !== undefined && !msg.extra.preview) {
               content = content.replace(linkRegExp, '<$&>');
+            }
+            if (content.indexOf(this.config.prefix) > -1) {
+              content = this.addDiscordSlashCommands(content);
             }
           }
 
@@ -293,5 +306,19 @@ export class Bot {
       return 10;
     }
     return 3;
+  }
+
+  addDiscordSlashCommands(content: string): string {
+    const regex = /(?<!:\/\/)\/\S+(?=\s)/gim;
+    const matches = content.match(regex);
+    if (matches) {
+      for (const match of matches) {
+        const command = this.commands.find((command) => command.name === match.slice(1));
+        if (command) {
+          content = content.replace(new RegExp(match, 'gim'), `</${command.name}:${command.id}>`);
+        }
+      }
+    }
+    return content;
   }
 }
