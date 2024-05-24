@@ -312,13 +312,14 @@ export class Bot {
   }
 
   addDiscordSlashCommands(content: string): string {
-    const regex = /(?<!:\/\/)\/\S+(?=\s)/gim;
+    const regex = /\/\S+/gim;
     const matches = content.match(regex);
     if (matches) {
       for (const match of matches) {
         const command = this.commands.find((command) => command.name === match.slice(1));
         if (command) {
-          content = content.replace(new RegExp(match, 'gim'), `</${command.name}:${command.id}>`);
+          const matchRegex = new RegExp('(?<!<)/' + match.slice(1) + '(?!:)', 'gim');
+          content = content.replace(matchRegex, `</${command.name}:${command.id}>`);
         }
       }
     }
