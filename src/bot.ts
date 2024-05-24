@@ -318,8 +318,8 @@ export class Bot {
       for (const match of matches) {
         const command = this.commands.find((command) => command.name === match.slice(1));
         if (command) {
-          const matchRegex = new RegExp('(?<!<)/' + match.slice(1) + '(?!:)', 'gim');
-          content = content.replace(matchRegex, `</${command.name}:${command.id}>`);
+          const matchRegex = new RegExp('(?<!<)/' + match.slice(1) + '\\s(?!:)', 'gim');
+          content = content.replace(matchRegex, `</${command.name}:${command.id}> `);
         }
       }
     }
