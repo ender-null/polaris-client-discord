@@ -208,9 +208,15 @@ export class Bot {
 
         if (content.length > 2000) {
           const texts = splitLargeMessage(content, 2000);
+          let replied = false;
           for (const text of texts) {
             if (interaction) {
-              await interaction.reply(text);
+              if (!replied) {
+                await interaction.reply(text);
+                replied = true
+              } else {
+                await interaction.followUp(text);
+              }
             } else if (channel) {
               await channel.send(text);
             }
