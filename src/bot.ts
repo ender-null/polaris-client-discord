@@ -179,14 +179,14 @@ export class Bot {
       this.interactions.splice(this.interactions.indexOf(interaction), 1);
     }
     if (msg.content) {
-      let chat;
+      let channel;
       try {
         if (msg.extra.originalMessage) {
-          chat = await this.bot.channels.fetch(msg.extra.originalMessage.channelId);
+          channel = await this.bot.channels.fetch(msg.extra.originalMessage.channelId);
         } else if (String(msg.conversation.id).startsWith('-')) {
-          chat = await this.bot.channels.fetch(String(msg.conversation.id).slice(1));
+          channel = await this.bot.channels.fetch(String(msg.conversation.id).slice(1));
         } else {
-          chat = await (await this.bot.users.fetch(String(msg.conversation.id))).dmChannel;
+          channel = await (await this.bot.users.fetch(String(msg.conversation.id))).dmChannel;
         }
       } catch (e) {
         logger.error(`${e.message} ${msg.conversation.id}`);
@@ -211,23 +211,23 @@ export class Bot {
           for (const text of texts) {
             if (interaction) {
               await interaction.reply(text);
-            } else if (chat) {
-              await chat.send(text);
+            } else if (channel) {
+              await channel.send(text);
             }
           }
         } else {
           if (interaction) {
             await interaction.reply(content);
           } else {
-            await chat.send(content);
+            await channel.send(content);
           }
         }
       } else if (msg.type == 'photo' || msg.type == 'document' || msg.type == 'video' || msg.type == 'voice') {
         let sendContent = true;
         const embed = new EmbedBuilder();
 
-        if (msg.extra && 'caption' in msg.extra && msg.extra['caption']) {
-          const lines = msg.extra['caption'].split('\n');
+        if (msg.extra && msg.extra.caption) {
+          const lines = msg.extra.caption.split('\n');
           embed.setTitle(lines[0]);
           lines.splice(0, 1);
           embed.setDescription(lines.join('\n'));
@@ -239,20 +239,20 @@ export class Bot {
             const file = new AttachmentBuilder(msg.content);
             if (interaction) {
               await interaction.reply({ files: [file] });
-            } else if (chat) {
-              await chat.send({ files: [file] });
+            } else if (channel) {
+              await channel.send({ files: [file] });
             }
           } else {
             if (interaction) {
               await interaction.reply(msg.content);
-            } else if (chat) {
-              await chat.send(msg.content);
+            } else if (channel) {
+              await channel.send(msg.content);
             }
           }
         } else {
           if (msg.content.startsWith('/') || msg.content.startsWith('C:\\')) {
             const file = new AttachmentBuilder(msg.content);
-            await chat.send({ embeds: [embed], files: [file] });
+            await channel.send({ embeds: [embed], files: [file] });
           } else if (msg.content.startsWith('http')) {
             if (msg.type == 'photo') {
               embed.setImage(msg.content);
@@ -263,9 +263,9 @@ export class Bot {
             embed.setURL(msg.content);
           }
           if (interaction) {
-            await interaction.reply(embed);
-          } else if (chat) {
-            await chat.send(embed);
+            await interaction.reply({ embeds: [embed] });
+          } else if (channel) {
+            await channel.send({ embeds: [embed] });
           }
         }
       }
