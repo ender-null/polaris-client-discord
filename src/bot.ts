@@ -173,13 +173,13 @@ export class Bot {
   }
 
   async sendMessage(msg: Message): Promise<void> {
-    let interaction;
+    let interaction: ChatInputCommandInteraction<CacheType>;
     if (msg.reply.extra.interaction) {
       interaction = this.interactions.find((interaction) => interaction.id === msg.reply.id);
       this.interactions.splice(this.interactions.indexOf(interaction), 1);
     }
     if (msg.content) {
-      let channel;
+      let channel: any;
       try {
         if (msg.extra.originalMessage) {
           channel = await this.bot.channels.fetch(msg.extra.originalMessage.channelId);
@@ -195,11 +195,11 @@ export class Bot {
       if (msg.type == 'text') {
         let content = msg.content;
         if (msg.extra) {
-          if (msg.extra.format == 'HTML') {
-            content = htmlToDiscordMarkdown(content);
-          }
           if (msg.extra.preview !== undefined && !msg.extra.preview) {
             content = content.replace(linkRegExp, '<$&>');
+          }
+          if (msg.extra.format == 'HTML') {
+            content = htmlToDiscordMarkdown(content);
           }
           if (content.indexOf(this.config.prefix) > -1) {
             content = this.addDiscordSlashCommands(content);
@@ -213,7 +213,7 @@ export class Bot {
             if (interaction) {
               if (!replied) {
                 await interaction.reply(text);
-                replied = true
+                replied = true;
               } else {
                 await interaction.followUp(text);
               }
@@ -233,7 +233,11 @@ export class Bot {
         const embed = new EmbedBuilder();
 
         if (msg.extra && msg.extra.caption) {
-          const lines = msg.extra.caption.split('\n');
+          let caption = msg.extra.caption;
+          if (msg.extra.format == 'HTML') {
+            caption = htmlToDiscordMarkdown(caption);
+          }
+          const lines = caption.split('\n');
           embed.setTitle(lines[0]);
           lines.splice(0, 1);
           embed.setDescription(lines.join('\n'));
