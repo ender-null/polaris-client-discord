@@ -74,6 +74,9 @@ const poll = () => {
   logger.info('Starting polling...');
   ws = new WebSocket(process.env.SERVER);
   bot = new Bot(ws, client);
+  client.user.setPresence({
+    status: 'idle',
+  });
 
   clearInterval(pingInterval);
   pingInterval = setInterval(() => {
