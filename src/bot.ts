@@ -63,8 +63,8 @@ export class Bot {
       status: 'online',
       activities: [
         {
-          name: `${this.config.prefix}start`,
-          state: `✨ ${this.config.prefix}start`,
+          name: `${this.config.prefix}help`,
+          state: `✨ ${this.config.prefix}help`,
           type: ActivityType.Custom,
         },
       ],
