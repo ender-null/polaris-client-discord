@@ -201,7 +201,7 @@ export class Bot {
           if (msg.extra.format == 'HTML') {
             content = htmlToDiscordMarkdown(content);
           }
-          if (content.indexOf(this.config.prefix) > -1) {
+          if (msg.reply.extra.interaction && content.indexOf(this.config.prefix) > -1) {
             content = this.addDiscordSlashCommands(content);
           }
         }
@@ -322,13 +322,14 @@ export class Bot {
   }
 
   addDiscordSlashCommands(content: string): string {
-    const regex = /\/\S+/gim;
+    const prefix = this.config.prefix.replace(/[.*+?^$!/{}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`${prefix}\\S+`, 'gim');
     const matches = content.match(regex);
     if (matches) {
       for (const match of matches) {
         const command = this.commands.find((command) => command.name === match.slice(1));
         if (command) {
-          const matchRegex = new RegExp('(?<!<)/' + match.slice(1) + '\\s(?!:)', 'gim');
+          const matchRegex = new RegExp(`(?<!<)${prefix}${match.slice(1)}\\s(?!:)`, 'gim');
           content = content.replace(matchRegex, `</${command.name}:${command.id}> `);
         }
       }
