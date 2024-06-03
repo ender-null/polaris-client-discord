@@ -34,6 +34,7 @@ export class Bot {
   config: Config;
   websocket: WebSocket;
   bot: Client;
+  messages: DiscordMessage[];
   interactions: ChatInputCommandInteraction<CacheType>[];
   commands: Collection<
     string,
@@ -45,6 +46,7 @@ export class Bot {
   constructor(websocket: WebSocket, bot: Client) {
     this.websocket = websocket;
     this.bot = bot;
+    this.messages = [];
     this.interactions = [];
   }
 
@@ -134,6 +136,7 @@ export class Bot {
     } else {
       conversation.title = channel['name'];
     }
+    this.messages.push(msg);
     return new Message(id, conversation, sender, content, type, date, reply, extra);
   }
 
@@ -173,10 +176,14 @@ export class Bot {
   }
 
   async sendMessage(msg: Message): Promise<void> {
+    let message: DiscordMessage;
     let interaction: ChatInputCommandInteraction<CacheType>;
     if (msg.reply.extra.interaction) {
       interaction = this.interactions.find((interaction) => interaction.id === msg.reply.id);
       this.interactions.splice(this.interactions.indexOf(interaction), 1);
+    } else {
+      message = this.messages.find((message) => message.id === msg.reply.id);
+      this.messages.splice(this.messages.indexOf(message), 1);
     }
     if (msg.content) {
       let channel: any;
@@ -217,6 +224,8 @@ export class Bot {
               } else {
                 await interaction.followUp(text);
               }
+            } else if (message) {
+              await message.reply(text);
             } else if (channel) {
               await channel.send(text);
             }
@@ -224,6 +233,8 @@ export class Bot {
         } else {
           if (interaction) {
             await interaction.reply(content);
+          } else if (message) {
+            await message.reply(content);
           } else {
             await channel.send(content);
           }
@@ -249,12 +260,16 @@ export class Bot {
             const file = new AttachmentBuilder(msg.content);
             if (interaction) {
               await interaction.reply({ files: [file] });
+            } else if (message) {
+              await message.reply({ files: [file] });
             } else if (channel) {
               await channel.send({ files: [file] });
             }
           } else {
             if (interaction) {
               await interaction.reply(msg.content);
+            } else if (message) {
+              await message.reply(msg.content);
             } else if (channel) {
               await channel.send(msg.content);
             }
@@ -274,6 +289,8 @@ export class Bot {
           }
           if (interaction) {
             await interaction.reply({ embeds: [embed] });
+          } else if (message) {
+            await message.reply({ embeds: [embed] });
           } else if (channel) {
             await channel.send({ embeds: [embed] });
           }
