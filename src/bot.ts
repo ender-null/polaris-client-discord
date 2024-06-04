@@ -225,7 +225,12 @@ export class Bot {
                 await interaction.followUp(text);
               }
             } else if (message) {
-              await message.reply(text);
+              await message.reply({
+                content: text,
+                allowedMentions: {
+                  repliedUser: false,
+                },
+              });
             } else if (channel) {
               await channel.send(text);
             }
@@ -234,7 +239,12 @@ export class Bot {
           if (interaction) {
             await interaction.reply(content);
           } else if (message) {
-            await message.reply(content);
+            await message.reply({
+              content: content,
+              allowedMentions: {
+                repliedUser: false,
+              },
+            });
           } else {
             await channel.send(content);
           }
@@ -261,7 +271,12 @@ export class Bot {
             if (interaction) {
               await interaction.reply({ files: [file] });
             } else if (message) {
-              await message.reply({ files: [file] });
+              await message.reply({
+                files: [file],
+                allowedMentions: {
+                  repliedUser: false,
+                },
+              });
             } else if (channel) {
               await channel.send({ files: [file] });
             }
@@ -269,7 +284,12 @@ export class Bot {
             if (interaction) {
               await interaction.reply(msg.content);
             } else if (message) {
-              await message.reply(msg.content);
+              await message.reply({
+                content: msg.content,
+                allowedMentions: {
+                  repliedUser: false,
+                },
+              });
             } else if (channel) {
               await channel.send(msg.content);
             }
@@ -277,7 +297,19 @@ export class Bot {
         } else {
           if (msg.content.startsWith('/') || msg.content.startsWith('C:\\')) {
             const file = new AttachmentBuilder(msg.content);
-            await channel.send({ embeds: [embed], files: [file] });
+            if (interaction) {
+              await interaction.reply({ embeds: [embed], files: [file] });
+            } else if (message) {
+              await message.reply({
+                embeds: [embed],
+                files: [file],
+                allowedMentions: {
+                  repliedUser: false,
+                },
+              });
+            } else if (channel) {
+              await channel.send({ embeds: [embed], files: [file] });
+            }
           } else if (msg.content.startsWith('http')) {
             if (msg.type == 'photo') {
               embed.setImage(msg.content);
@@ -290,7 +322,12 @@ export class Bot {
           if (interaction) {
             await interaction.reply({ embeds: [embed] });
           } else if (message) {
-            await message.reply({ embeds: [embed] });
+            await message.reply({
+              embeds: [embed],
+              allowedMentions: {
+                repliedUser: false,
+              },
+            });
           } else if (channel) {
             await channel.send({ embeds: [embed] });
           }
