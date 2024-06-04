@@ -12,7 +12,7 @@ import {
   WSPing,
 } from './types';
 import { Config } from './config';
-import { htmlToDiscordMarkdown, linkRegExp, logger, splitLargeMessage } from './utils';
+import { fromBase64, htmlToDiscordMarkdown, linkRegExp, logger, splitLargeMessage } from './utils';
 
 import {
   ActivityType,
@@ -267,18 +267,19 @@ export class Bot {
 
         if (sendContent) {
           if (msg.content.startsWith('/') || msg.content.startsWith('C:\\')) {
-            const file = new AttachmentBuilder(msg.content);
+            const file = await fromBase64(msg.content);
+            const attachment = new AttachmentBuilder(file.name);
             if (interaction) {
-              await interaction.reply({ files: [file] });
+              await interaction.reply({ files: [attachment] });
             } else if (message) {
               await message.reply({
-                files: [file],
+                files: [attachment],
                 allowedMentions: {
                   repliedUser: false,
                 },
               });
             } else if (channel) {
-              await channel.send({ files: [file] });
+              await channel.send({ files: [attachment] });
             }
           } else {
             if (interaction) {
@@ -296,19 +297,20 @@ export class Bot {
           }
         } else {
           if (msg.content.startsWith('/') || msg.content.startsWith('C:\\')) {
-            const file = new AttachmentBuilder(msg.content);
+            const file = await fromBase64(msg.content);
+            const attachment = new AttachmentBuilder(file.name);
             if (interaction) {
-              await interaction.reply({ embeds: [embed], files: [file] });
+              await interaction.reply({ embeds: [embed], files: [attachment] });
             } else if (message) {
               await message.reply({
                 embeds: [embed],
-                files: [file],
+                files: [attachment],
                 allowedMentions: {
                   repliedUser: false,
                 },
               });
             } else if (channel) {
-              await channel.send({ embeds: [embed], files: [file] });
+              await channel.send({ embeds: [embed], files: [attachment] });
             }
           } else if (msg.content.startsWith('http')) {
             if (msg.type == 'photo') {
