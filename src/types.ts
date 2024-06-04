@@ -148,6 +148,7 @@ export interface Extra {
   preview?: boolean;
   caption?: string;
   message?: number | string;
+  attachment?: string;
   title?: string;
   description?: string;
   photo?: string;

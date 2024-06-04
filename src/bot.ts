@@ -262,7 +262,7 @@ export class Bot {
 
         if (msg.content.startsWith('/') || msg.content.startsWith('C:\\')) {
           const file = await fromBase64(msg.content);
-          const attachment = new AttachmentBuilder(file.name);
+          const attachment = new AttachmentBuilder(file.name, { name: msg.extra.attachment });
           params = { ...params, embeds: !skipEmbed ? [embed] : null, files: [attachment] };
         } else if (msg.content.startsWith('http')) {
           if (msg.type == 'photo') {
@@ -277,7 +277,6 @@ export class Bot {
             content: skipEmbed ? msg.content : null,
           };
         }
-        console.log(params);
         if (params) {
           if (interaction) {
             await interaction.reply({ ...params });
