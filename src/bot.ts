@@ -213,45 +213,40 @@ export class Bot {
           }
         }
 
+        let texts = [content];
         if (content.length > 2000) {
-          const texts = splitLargeMessage(content, 2000);
-          let replied = false;
-          for (const text of texts) {
-            if (interaction) {
-              if (!replied) {
-                await interaction.reply(text);
-                replied = true;
-              } else {
-                await interaction.followUp(text);
-              }
-            } else if (message) {
-              await message.reply({
-                content: text,
-                allowedMentions: {
-                  repliedUser: false,
-                },
-              });
-            } else if (channel) {
-              await channel.send(text);
-            }
-          }
-        } else {
+          texts = splitLargeMessage(content, 2000);
+        }
+        let replied = false;
+        for (const text of texts) {
+          const params = {
+            content: text,
+            allowedMentions: {
+              repliedUser: false,
+            },
+          };
           if (interaction) {
-            await interaction.reply(content);
+            if (!replied) {
+              await interaction.reply({ ...params });
+              replied = true;
+            } else {
+              await interaction.followUp({ ...params });
+            }
           } else if (message) {
-            await message.reply({
-              content: content,
-              allowedMentions: {
-                repliedUser: false,
-              },
-            });
-          } else {
-            await channel.send(content);
+            await message.reply({ ...params });
+          } else if (channel) {
+            await channel.send({ ...params });
           }
         }
       } else if (msg.type == 'photo' || msg.type == 'document' || msg.type == 'video' || msg.type == 'voice') {
-        let sendContent = true;
         const embed = new EmbedBuilder();
+        let skipEmbed = true;
+        let params: any = {
+          content: msg.content,
+          allowedMentions: {
+            repliedUser: false,
+          },
+        };
 
         if (msg.extra && msg.extra.caption) {
           let caption = msg.extra.caption;
@@ -262,76 +257,34 @@ export class Bot {
           embed.setTitle(lines[0]);
           lines.splice(0, 1);
           embed.setDescription(lines.join('\n'));
-          sendContent = false;
+          skipEmbed = false;
         }
 
-        if (sendContent) {
-          if (msg.content.startsWith('/') || msg.content.startsWith('C:\\')) {
-            const file = await fromBase64(msg.content);
-            const attachment = new AttachmentBuilder(file.name);
-            if (interaction) {
-              await interaction.reply({ files: [attachment] });
-            } else if (message) {
-              await message.reply({
-                files: [attachment],
-                allowedMentions: {
-                  repliedUser: false,
-                },
-              });
-            } else if (channel) {
-              await channel.send({ files: [attachment] });
-            }
+        if (msg.content.startsWith('/') || msg.content.startsWith('C:\\')) {
+          const file = await fromBase64(msg.content);
+          const attachment = new AttachmentBuilder(file.name);
+          params = { ...params, embeds: !skipEmbed ? [embed] : null, files: [attachment] };
+        } else if (msg.content.startsWith('http')) {
+          if (msg.type == 'photo') {
+            embed.setImage(msg.content);
           } else {
-            if (interaction) {
-              await interaction.reply(msg.content);
-            } else if (message) {
-              await message.reply({
-                content: msg.content,
-                allowedMentions: {
-                  repliedUser: false,
-                },
-              });
-            } else if (channel) {
-              await channel.send(msg.content);
-            }
+            embed.setURL(msg.content);
           }
         } else {
-          if (msg.content.startsWith('/') || msg.content.startsWith('C:\\')) {
-            const file = await fromBase64(msg.content);
-            const attachment = new AttachmentBuilder(file.name);
-            if (interaction) {
-              await interaction.reply({ embeds: [embed], files: [attachment] });
-            } else if (message) {
-              await message.reply({
-                embeds: [embed],
-                files: [attachment],
-                allowedMentions: {
-                  repliedUser: false,
-                },
-              });
-            } else if (channel) {
-              await channel.send({ embeds: [embed], files: [attachment] });
-            }
-          } else if (msg.content.startsWith('http')) {
-            if (msg.type == 'photo') {
-              embed.setImage(msg.content);
-            }
-          } else if (msg.type == 'video') {
-            embed.setURL(msg.content);
-          } else {
-            embed.setURL(msg.content);
-          }
+          params = {
+            ...params,
+            embeds: !skipEmbed ? [embed] : null,
+            content: skipEmbed ? msg.content : null,
+          };
+        }
+        console.log(params);
+        if (params) {
           if (interaction) {
-            await interaction.reply({ embeds: [embed] });
+            await interaction.reply({ ...params });
           } else if (message) {
-            await message.reply({
-              embeds: [embed],
-              allowedMentions: {
-                repliedUser: false,
-              },
-            });
+            await message.reply({ ...params });
           } else if (channel) {
-            await channel.send({ embeds: [embed] });
+            await channel.send({ ...params });
           }
         }
       }
