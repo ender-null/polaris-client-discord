@@ -187,6 +187,8 @@ export class Bot {
     }
     if (msg.content) {
       let channel: any;
+      let messages = [];
+      let replied = false;
       try {
         if (msg.extra.originalMessage) {
           channel = await this.bot.channels.fetch(msg.extra.originalMessage.channelId);
@@ -212,31 +214,23 @@ export class Bot {
             content = this.addDiscordSlashCommands(content);
           }
         }
-
-        let texts = [content];
-        if (content.length > 2000) {
-          texts = splitLargeMessage(content, 2000);
-        }
-        let replied = false;
-        for (const text of texts) {
-          const params = {
-            content: text,
+        messages = [
+          {
+            content: content,
             allowedMentions: {
               repliedUser: false,
             },
-          };
-          if (interaction) {
-            if (!replied) {
-              await interaction.reply({ ...params });
-              replied = true;
-            } else {
-              await interaction.followUp({ ...params });
-            }
-          } else if (message) {
-            await message.reply({ ...params });
-          } else if (channel) {
-            await channel.send({ ...params });
-          }
+          },
+        ];
+        if (content.length > 2000) {
+          messages = splitLargeMessage(content, 2000).map((text) => {
+            return {
+              content: text,
+              allowedMentions: {
+                repliedUser: false,
+              },
+            };
+          });
         }
       } else if (msg.type == 'photo' || msg.type == 'document' || msg.type == 'video' || msg.type == 'voice') {
         const embed = new EmbedBuilder();
@@ -270,21 +264,26 @@ export class Bot {
           } else {
             embed.setURL(msg.content);
           }
-        } else {
-          params = {
-            ...params,
-            embeds: !skipEmbed ? [embed] : null,
-            content: skipEmbed ? msg.content : null,
-          };
         }
-        if (params) {
-          if (interaction) {
+        messages = [{
+          ...params,
+          embeds: !skipEmbed ? [embed] : null,
+          content: skipEmbed ? msg.content : null,
+        }];
+      }
+
+      for (const params of messages) {
+        if (interaction) {
+          if (!replied) {
             await interaction.reply({ ...params });
-          } else if (message) {
-            await message.reply({ ...params });
-          } else if (channel) {
-            await channel.send({ ...params });
+            replied = true;
+          } else {
+            await interaction.followUp({ ...params });
           }
+        } else if (message) {
+          await message.reply({ ...params });
+        } else if (channel) {
+          await channel.send({ ...params });
         }
       }
     }
