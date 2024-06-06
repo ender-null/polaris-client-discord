@@ -129,12 +129,12 @@ export class Bot {
     const content = msg.content;
     const type = 'text';
     const date = msg.createdTimestamp;
-    const channel = await this.bot.channels.fetch(msg.channel.id);
+    const channel: any = await this.bot.channels.fetch(msg.channel.id);
     if (channel.constructor.name == 'DMChannel') {
-      conversation.id = channel['recipient']['id'];
-      conversation.title = channel['recipient']['username'];
+      conversation.id = channel.recipient.id;
+      conversation.title = channel.recipient.username;
     } else {
-      conversation.title = channel['name'];
+      conversation.title = channel.name;
     }
     this.messages.push(msg);
     return new Message(id, conversation, sender, content, type, date, reply, extra);
@@ -164,9 +164,9 @@ export class Bot {
     const channelId = msg.channelId || msg.channel.id;
     const conversation = new Conversation('-' + channelId, channelId);
     try {
-      const channel = await this.bot.channels.fetch(channelId);
+      const channel: any = await this.bot.channels.fetch(channelId);
       if (channel.constructor.name == 'DMChannel') {
-        conversation.id = channel['recipientId'];
+        conversation.id = channel.recipientId;
       }
     } catch (error) {
       logger.error(error.message);
@@ -254,7 +254,7 @@ export class Bot {
           skipEmbed = false;
         }
 
-        if (msg.content.startsWith('/') || msg.content.startsWith('C:\\')) {
+        if (msg.content.startsWith('/')) {
           const file = await fromBase64(msg.content);
           const attachment = new AttachmentBuilder(file.name, { name: msg.extra.attachment });
           params = { ...params, embeds: !skipEmbed ? [embed] : null, files: [attachment] };
@@ -265,11 +265,13 @@ export class Bot {
             embed.setURL(msg.content);
           }
         }
-        messages = [{
-          ...params,
-          embeds: !skipEmbed ? [embed] : null,
-          content: skipEmbed ? msg.content : null,
-        }];
+        messages = [
+          {
+            ...params,
+            embeds: !skipEmbed ? [embed] : null,
+            content: skipEmbed ? msg.content : null,
+          },
+        ];
       }
 
       for (const params of messages) {
