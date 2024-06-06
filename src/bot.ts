@@ -27,6 +27,7 @@ import {
   GuildResolvable,
   REST,
   Routes,
+  inlineCode,
 } from 'discord.js';
 
 export class Bot {
@@ -210,8 +211,10 @@ export class Bot {
           if (msg.extra.format == 'HTML') {
             content = htmlToDiscordMarkdown(content);
           }
-          if (msg.reply.extra.interaction && content.indexOf(this.config.prefix) > -1) {
+          if (msg.reply.extra.interaction) {
             content = this.addDiscordSlashCommands(content);
+          } else {
+            content = this.addCommandsHighlight(content);
           }
         }
         messages = [
@@ -341,6 +344,19 @@ export class Bot {
           const matchRegex = new RegExp(`(?<!<)${prefix}${match.slice(1)}\\s(?!:)`, 'gim');
           content = content.replace(matchRegex, `</${command.name}:${command.id}> `);
         }
+      }
+    }
+    return content;
+  }
+
+  addCommandsHighlight(content: string): string {
+    const prefix = this.config.prefix.replace(/[.*+?^$!/{}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`${prefix}\\S+`, 'gim');
+    const matches = content.match(regex);
+    if (matches) {
+      for (const match of matches) {
+        const matchRegex = new RegExp(`(?<!<)${prefix}${match.slice(1)}\\s(?!:)`, 'gim');
+        content = content.replace(matchRegex, inlineCode(match) + ' ');
       }
     }
     return content;
