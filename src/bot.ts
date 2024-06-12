@@ -334,12 +334,11 @@ export class Bot {
   }
 
   addDiscordMentions(content: string): string {
-    const regex = new RegExp(`@\\S+`, 'gim');
+    const regex = new RegExp(`@\\[a-zA-Z0-9_#]+`, 'gim');
     const matches = content.match(regex);
     if (matches) {
       for (const match of matches) {
         logger.info(match.slice(1));
-        logger.info(this.bot.users.cache.toJSON());
         const user = this.bot.users.cache.find((user) => user.username === match.slice(1));
         logger.info(JSON.stringify(user, null, 4));
         if (user) {
