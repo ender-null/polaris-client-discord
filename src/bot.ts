@@ -338,11 +338,9 @@ export class Bot {
     const matches = content.match(regex);
     if (matches) {
       for (const match of matches) {
-        logger.info(match.slice(1));
         const user = this.bot.users.cache.find((user) => user.username === match.slice(1));
-        logger.info(JSON.stringify(user, null, 4));
         if (user) {
-          const matchRegex = new RegExp(`(?<!<)@${match.slice(1)}\\s(?!:)`, 'gim');
+          const matchRegex = new RegExp(match, 'gim');
           content = content.replace(matchRegex, userMention(user.id));
         }
       }
