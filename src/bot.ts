@@ -266,14 +266,13 @@ export class Bot {
           } else {
             embed.setURL(msg.content);
           }
-        }
-        messages = [
-          {
+          params = {
             ...params,
             embeds: !skipEmbed ? [embed] : null,
             content: skipEmbed ? msg.content : null,
-          },
-        ];
+          };
+        }
+        messages = [params];
       }
 
       for (const params of messages) {
