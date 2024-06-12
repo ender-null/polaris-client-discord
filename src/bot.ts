@@ -28,6 +28,7 @@ import {
   REST,
   Routes,
   inlineCode,
+  userMention,
 } from 'discord.js';
 
 export class Bot {
@@ -216,6 +217,7 @@ export class Bot {
           } else {
             content = this.addCommandsHighlight(content);
           }
+          content = await this.addDiscordMentions(content);
         }
         messages = [
           {
@@ -329,6 +331,21 @@ export class Bot {
       return 10;
     }
     return 3;
+  }
+
+  async addDiscordMentions(content: string): Promise<string> {
+    const regex = new RegExp(`@\\S+`, 'gim');
+    const matches = content.match(regex);
+    if (matches) {
+      for (const match of matches) {
+        const user = await this.bot.users.fetch(match);
+        if (user) {
+          const matchRegex = new RegExp(`(?<!<)@${match.slice(1)}\\s(?!:)`, 'gim');
+          content = content.replace(matchRegex, userMention(user.id));
+        }
+      }
+    }
+    return content;
   }
 
   addDiscordSlashCommands(content: string): string {
