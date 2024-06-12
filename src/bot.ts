@@ -217,7 +217,7 @@ export class Bot {
           } else {
             content = this.addCommandsHighlight(content);
           }
-          content = await this.addDiscordMentions(content);
+          content = this.addDiscordMentions(content);
         }
         messages = [
           {
@@ -333,12 +333,14 @@ export class Bot {
     return 3;
   }
 
-  async addDiscordMentions(content: string): Promise<string> {
+  addDiscordMentions(content: string): string {
     const regex = new RegExp(`@\\S+`, 'gim');
     const matches = content.match(regex);
     if (matches) {
       for (const match of matches) {
-        const user = await this.bot.users.cache.find(user => user.username === match.slice(1));
+        logger.info(match.slice(1));
+        logger.info(this.bot.users.cache.toJSON());
+        const user = this.bot.users.cache.find((user) => user.username === match.slice(1));
         logger.info(JSON.stringify(user, null, 4));
         if (user) {
           const matchRegex = new RegExp(`(?<!<)@${match.slice(1)}\\s(?!:)`, 'gim');
