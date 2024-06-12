@@ -239,7 +239,6 @@ export class Bot {
         const embed = new EmbedBuilder();
         let skipEmbed = true;
         let params: any = {
-          content: msg.content,
           allowedMentions: {
             repliedUser: false,
           },
@@ -260,7 +259,7 @@ export class Bot {
         if (base64regex.test(msg.content)) {
           const file = await fromBase64(msg.content);
           const attachment = new AttachmentBuilder(file.name, { name: msg.extra.attachment });
-          params = { ...params, content: '', embeds: !skipEmbed ? [embed] : null, files: [attachment] };
+          params = { ...params, embeds: !skipEmbed ? [embed] : null, files: [attachment] };
         } else if (msg.content.startsWith('http')) {
           if (msg.type == 'photo') {
             embed.setImage(msg.content);
