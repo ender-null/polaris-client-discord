@@ -339,6 +339,7 @@ export class Bot {
     if (matches) {
       for (const match of matches) {
         const user = await this.bot.users.fetch(match);
+        logger.info(JSON.stringify(user, null, 4));
         if (user) {
           const matchRegex = new RegExp(`(?<!<)@${match.slice(1)}\\s(?!:)`, 'gim');
           content = content.replace(matchRegex, userMention(user.id));
