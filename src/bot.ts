@@ -12,7 +12,7 @@ import {
   WSPing,
 } from './types';
 import { Config } from './config';
-import { fromBase64, htmlToDiscordMarkdown, linkRegExp, logger, splitLargeMessage } from './utils';
+import { base64regex, fromBase64, htmlToDiscordMarkdown, linkRegExp, logger, splitLargeMessage } from './utils';
 
 import {
   ActivityType,
@@ -257,7 +257,7 @@ export class Bot {
           skipEmbed = false;
         }
 
-        if (msg.content.startsWith('/')) {
+        if (base64regex.test(msg.content)) {
           const file = await fromBase64(msg.content);
           const attachment = new AttachmentBuilder(file.name, { name: msg.extra.attachment });
           params = { ...params, embeds: !skipEmbed ? [embed] : null, files: [attachment] };
