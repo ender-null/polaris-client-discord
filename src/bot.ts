@@ -334,12 +334,13 @@ export class Bot {
   }
 
   addDiscordMentions(content: string): string {
-    const regex = new RegExp(`@\\[a-zA-Z0-9_#]+`, 'gim');
+    const regex = new RegExp(`@([a-zA-Z0-9_.]+)[ .,]`, 'gim');
     const matches = content.match(regex);
+    logger.info(JSON.stringify(matches, null, 4));
     if (matches) {
       for (const match of matches) {
         logger.info(match.slice(1));
-        const user = this.bot.users.cache.find((user) => user.username === match.slice(1));
+        const user = this.bot.users.cache.find((user) => user.username === match);
         logger.info(JSON.stringify(user, null, 4));
         if (user) {
           const matchRegex = new RegExp(`(?<!<)@${match.slice(1)}\\s(?!:)`, 'gim');
@@ -352,13 +353,13 @@ export class Bot {
 
   addDiscordSlashCommands(content: string): string {
     const prefix = this.config.prefix.replace(/[.*+?^$!/{}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(`${prefix}\\S+`, 'gim');
+    const regex = new RegExp(`${prefix}(\\S+)`, 'gim');
     const matches = content.match(regex);
     if (matches) {
       for (const match of matches) {
-        const command = this.commands.find((command) => command.name === match.slice(1));
+        const command = this.commands.find((command) => command.name === match);
         if (command) {
-          const matchRegex = new RegExp(`(?<!<)${prefix}${match.slice(1)}\\s(?!:)`, 'gim');
+          const matchRegex = new RegExp(`(?<!<)${prefix}${match}\\s(?!:)`, 'gim');
           content = content.replace(matchRegex, `</${command.name}:${command.id}> `);
         }
       }
@@ -368,12 +369,12 @@ export class Bot {
 
   addCommandsHighlight(content: string): string {
     const prefix = this.config.prefix.replace(/[.*+?^$!/{}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(`${prefix}\\S+`, 'gim');
+    const regex = new RegExp(`${prefix}(\\S+)`, 'gim');
     const matches = content.match(regex);
     if (matches) {
       for (const match of matches) {
-        const matchRegex = new RegExp(`(?<!<)${prefix}${match.slice(1)}\\s(?!:)`, 'gim');
-        content = content.replace(matchRegex, inlineCode(match) + ' ');
+        const matchRegex = new RegExp(`(?<!<)${prefix}${match}\\s(?!:)`, 'gim');
+        content = content.replace(matchRegex, inlineCode(`${prefix}${match}`) + ' ');
       }
     }
     return content;
