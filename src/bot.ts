@@ -199,7 +199,7 @@ export class Bot {
         } else if (String(msg.conversation.id).startsWith('-')) {
           channel = await this.bot.channels.fetch(String(msg.conversation.id).slice(1));
         } else {
-          channel = await (await this.bot.users.fetch(String(msg.conversation.id))).dmChannel;
+          channel = await (await this.bot.users.fetch(String(msg.conversation.id))).createDM();
         }
       } catch (e) {
         logger.error(`${e.message} ${msg.conversation.id}`);
