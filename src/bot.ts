@@ -180,12 +180,14 @@ export class Bot {
   async sendMessage(msg: Message): Promise<void> {
     let message: DiscordMessage;
     let interaction: ChatInputCommandInteraction<CacheType>;
-    if (msg.reply && msg.reply.extra.interaction) {
-      interaction = this.interactions.find((interaction) => interaction.id === msg.reply.id);
-      this.interactions.splice(this.interactions.indexOf(interaction), 1);
-    } else {
-      message = this.messages.find((message) => message.id === msg.reply.id);
-      this.messages.splice(this.messages.indexOf(message), 1);
+    if (msg.reply) {
+      if (msg.reply.extra.interaction) {
+        interaction = this.interactions.find((interaction) => interaction.id === msg.reply.id);
+        this.interactions.splice(this.interactions.indexOf(interaction), 1);
+      } else {
+        message = this.messages.find((message) => message.id === msg.reply.id);
+        this.messages.splice(this.messages.indexOf(message), 1);
+      }
     }
     if (msg.content) {
       let channel: any;
