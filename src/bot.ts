@@ -180,7 +180,7 @@ export class Bot {
   async sendMessage(msg: Message): Promise<void> {
     let message: DiscordMessage;
     let interaction: ChatInputCommandInteraction<CacheType>;
-    if (msg.reply?.extra.interaction) {
+    if (msg.reply && msg.reply.extra.interaction) {
       interaction = this.interactions.find((interaction) => interaction.id === msg.reply.id);
       this.interactions.splice(this.interactions.indexOf(interaction), 1);
     } else {
@@ -212,7 +212,7 @@ export class Bot {
           if (msg.extra.format == 'HTML') {
             content = htmlToDiscordMarkdown(content);
           }
-          if (msg.reply.extra.interaction) {
+          if (msg.reply && msg.reply.extra.interaction) {
             content = this.addDiscordSlashCommands(content);
           } else {
             content = this.addCommandsHighlight(content);
