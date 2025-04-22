@@ -12,7 +12,7 @@ import {
   WSPing,
 } from './types';
 import { Config } from './config';
-import { fromBase64, htmlToDiscordMarkdown, linkRegExp, logger, splitLargeMessage } from './utils';
+import { base64regex, fromBase64, htmlToDiscordMarkdown, linkRegExp, logger, splitLargeMessage } from './utils';
 
 import {
   ActivityType,
@@ -27,6 +27,8 @@ import {
   GuildResolvable,
   REST,
   Routes,
+  inlineCode,
+  userMention,
 } from 'discord.js';
 
 export class Bot {
@@ -129,12 +131,12 @@ export class Bot {
     const content = msg.content;
     const type = 'text';
     const date = msg.createdTimestamp;
-    const channel = await this.bot.channels.fetch(msg.channel.id);
+    const channel: any = await this.bot.channels.fetch(msg.channel.id);
     if (channel.constructor.name == 'DMChannel') {
-      conversation.id = channel['recipient']['id'];
-      conversation.title = channel['recipient']['username'];
+      conversation.id = channel.recipient.id;
+      conversation.title = channel.recipient.username;
     } else {
-      conversation.title = channel['name'];
+      conversation.title = channel.name;
     }
     this.messages.push(msg);
     return new Message(id, conversation, sender, content, type, date, reply, extra);
@@ -164,9 +166,9 @@ export class Bot {
     const channelId = msg.channelId || msg.channel.id;
     const conversation = new Conversation('-' + channelId, channelId);
     try {
-      const channel = await this.bot.channels.fetch(channelId);
+      const channel: any = await this.bot.channels.fetch(channelId);
       if (channel.constructor.name == 'DMChannel') {
-        conversation.id = channel['recipientId'];
+        conversation.id = channel.recipientId;
       }
     } catch (error) {
       logger.error(error.message);
@@ -178,22 +180,26 @@ export class Bot {
   async sendMessage(msg: Message): Promise<void> {
     let message: DiscordMessage;
     let interaction: ChatInputCommandInteraction<CacheType>;
-    if (msg.reply.extra.interaction) {
-      interaction = this.interactions.find((interaction) => interaction.id === msg.reply.id);
-      this.interactions.splice(this.interactions.indexOf(interaction), 1);
-    } else {
-      message = this.messages.find((message) => message.id === msg.reply.id);
-      this.messages.splice(this.messages.indexOf(message), 1);
+    if (msg.reply) {
+      if (msg.reply.extra.interaction) {
+        interaction = this.interactions.find((interaction) => interaction.id === msg.reply.id);
+        this.interactions.splice(this.interactions.indexOf(interaction), 1);
+      } else {
+        message = this.messages.find((message) => message.id === msg.reply.id);
+        this.messages.splice(this.messages.indexOf(message), 1);
+      }
     }
     if (msg.content) {
       let channel: any;
+      let messages = [];
+      let replied = false;
       try {
         if (msg.extra.originalMessage) {
           channel = await this.bot.channels.fetch(msg.extra.originalMessage.channelId);
         } else if (String(msg.conversation.id).startsWith('-')) {
           channel = await this.bot.channels.fetch(String(msg.conversation.id).slice(1));
         } else {
-          channel = await (await this.bot.users.fetch(String(msg.conversation.id))).dmChannel;
+          channel = await (await this.bot.users.fetch(String(msg.conversation.id))).createDM();
         }
       } catch (e) {
         logger.error(`${e.message} ${msg.conversation.id}`);
@@ -208,41 +214,35 @@ export class Bot {
           if (msg.extra.format == 'HTML') {
             content = htmlToDiscordMarkdown(content);
           }
-          if (msg.reply.extra.interaction && content.indexOf(this.config.prefix) > -1) {
+          if (msg.reply && msg.reply.extra.interaction) {
             content = this.addDiscordSlashCommands(content);
+          } else {
+            content = this.addCommandsHighlight(content);
           }
+          content = this.addDiscordMentions(content);
         }
-
-        let texts = [content];
-        if (content.length > 2000) {
-          texts = splitLargeMessage(content, 2000);
-        }
-        let replied = false;
-        for (const text of texts) {
-          const params = {
-            content: text,
+        messages = [
+          {
+            content: content,
             allowedMentions: {
               repliedUser: false,
             },
-          };
-          if (interaction) {
-            if (!replied) {
-              await interaction.reply({ ...params });
-              replied = true;
-            } else {
-              await interaction.followUp({ ...params });
-            }
-          } else if (message) {
-            await message.reply({ ...params });
-          } else if (channel) {
-            await channel.send({ ...params });
-          }
+          },
+        ];
+        if (content.length > 2000) {
+          messages = splitLargeMessage(content, 2000).map((text) => {
+            return {
+              content: text,
+              allowedMentions: {
+                repliedUser: false,
+              },
+            };
+          });
         }
       } else if (msg.type == 'photo' || msg.type == 'document' || msg.type == 'video' || msg.type == 'voice') {
         const embed = new EmbedBuilder();
         let skipEmbed = true;
         let params: any = {
-          content: msg.content,
           allowedMentions: {
             repliedUser: false,
           },
@@ -260,7 +260,7 @@ export class Bot {
           skipEmbed = false;
         }
 
-        if (msg.content.startsWith('/') || msg.content.startsWith('C:\\')) {
+        if (base64regex.test(msg.content)) {
           const file = await fromBase64(msg.content);
           const attachment = new AttachmentBuilder(file.name, { name: msg.extra.attachment });
           params = { ...params, embeds: !skipEmbed ? [embed] : null, files: [attachment] };
@@ -270,21 +270,27 @@ export class Bot {
           } else {
             embed.setURL(msg.content);
           }
-        } else {
           params = {
             ...params,
             embeds: !skipEmbed ? [embed] : null,
             content: skipEmbed ? msg.content : null,
           };
         }
-        if (params) {
-          if (interaction) {
+        messages = [params];
+      }
+
+      for (const params of messages) {
+        if (interaction) {
+          if (!replied) {
             await interaction.reply({ ...params });
-          } else if (message) {
-            await message.reply({ ...params });
-          } else if (channel) {
-            await channel.send({ ...params });
+            replied = true;
+          } else {
+            await interaction.followUp({ ...params });
           }
+        } else if (message) {
+          await message.reply({ ...params });
+        } else if (channel) {
+          await channel.send({ ...params });
         }
       }
     }
@@ -329,6 +335,21 @@ export class Bot {
     return 3;
   }
 
+  addDiscordMentions(content: string): string {
+    const regex = new RegExp(`@([a-zA-Z0-9_#]+)`, 'gim');
+    const matches = content.match(regex);
+    if (matches) {
+      for (const match of matches) {
+        const user = this.bot.users.cache.find((user) => user.username === match.slice(1));
+        if (user) {
+          const matchRegex = new RegExp(match, 'gim');
+          content = content.replace(matchRegex, userMention(user.id));
+        }
+      }
+    }
+    return content;
+  }
+
   addDiscordSlashCommands(content: string): string {
     const prefix = this.config.prefix.replace(/[.*+?^$!/{}()|[\]\\]/g, '\\$&');
     const regex = new RegExp(`${prefix}\\S+`, 'gim');
@@ -340,6 +361,19 @@ export class Bot {
           const matchRegex = new RegExp(`(?<!<)${prefix}${match.slice(1)}\\s(?!:)`, 'gim');
           content = content.replace(matchRegex, `</${command.name}:${command.id}> `);
         }
+      }
+    }
+    return content;
+  }
+
+  addCommandsHighlight(content: string): string {
+    const prefix = this.config.prefix.replace(/[.*+?^$!/{}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`${prefix}\\S+`, 'gim');
+    const matches = content.match(regex);
+    if (matches) {
+      for (const match of matches) {
+        const matchRegex = new RegExp(`(?<!<)${prefix}${match.slice(1)}\\s(?!:)`, 'gim');
+        content = content.replace(matchRegex, inlineCode(match) + ' ');
       }
     }
     return content;
