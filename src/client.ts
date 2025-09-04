@@ -124,6 +124,6 @@ const poll = () => {
   });
 };
 
-client.on('ready', poll);
+client.on('clientReady', poll);
 
 client.login(process.env.DISCORD_TOKEN);
