@@ -135,8 +135,10 @@ export class Bot {
     if (channel.constructor.name == 'DMChannel') {
       conversation.id = channel.recipient.id;
       conversation.title = channel.recipient.username;
+      conversation.type = 'private';
     } else {
       conversation.title = channel.name;
+      conversation.type = 'group';
     }
     this.messages.push(msg);
     return new Message(id, conversation, sender, content, type, date, reply, extra);
