@@ -70,9 +70,12 @@ client.on('messageCreate', async (message: DiscordMessage) => {
   ws.send(JSON.stringify(data));
 });
 
+const serverUrl = process.env.SERVER;
+
 const poll = () => {
   logger.info('Starting polling...');
-  ws = new WebSocket(process.env.SERVER);
+  const userId = client.user.id;
+  ws = new WebSocket(`${serverUrl}?platform=discord&accountId=${userId}`);
   bot = new Bot(ws, client);
   client.user.setPresence({
     status: 'idle',
