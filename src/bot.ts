@@ -5,6 +5,7 @@ import {
   Extra,
   Message,
   ParameterType,
+  PluginIntent,
   User,
   WSBroadcast,
   WSCommand,
@@ -13,7 +14,6 @@ import {
 } from './types';
 import { Config } from './config';
 import { base64regex, fromBase64, htmlToDiscordMarkdown, linkRegExp, logger, splitLargeMessage } from './utils';
-
 import {
   ActivityType,
   ApplicationCommand,
@@ -322,6 +322,29 @@ export class Bot {
     } else {
       logger.error('Unsupported method');
     }
+  }
+
+  async handleIntents(intents: PluginIntent[]): Promise<void> {
+    const commands: any[] = [];
+    for (const intent of intents) {
+      commands.push({
+        name: intent.id,
+        description: intent.description,
+        type: 1,
+        integration_types: [0, 1],
+        options: Object.values(intent.parameters)?.map((param) => {
+          return {
+            name: param.name,
+            description: param.description,
+            required: param.required,
+            type: this.getParameterType(param.type as ParameterType),
+          };
+        }),
+      });
+    }
+
+    const rest = new REST({ version: '10' }).setToken(this.config.apiKeys.discordBotToken);
+    await rest.put(Routes.applicationCommands(this.config.apiKeys.discordClientId.toString()), { body: commands });
   }
 
   getParameterType(type: ParameterType): number {
