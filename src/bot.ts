@@ -1,19 +1,3 @@
-import WebSocket from 'ws';
-import {
-  Command,
-  Conversation,
-  Extra,
-  Message,
-  ParameterType,
-  PluginIntent,
-  User,
-  WSBroadcast,
-  WSCommand,
-  WSInit,
-  WSPing,
-} from './types';
-import { Config } from './config';
-import { base64regex, fromBase64, htmlToDiscordMarkdown, linkRegExp, logger, splitLargeMessage } from './utils';
 import {
   ActivityType,
   ApplicationCommand,
@@ -30,6 +14,22 @@ import {
   inlineCode,
   userMention,
 } from 'discord.js';
+import WebSocket from 'ws';
+import { Config } from './config';
+import {
+  Command,
+  Conversation,
+  Extra,
+  Message,
+  ParameterType,
+  PluginIntent,
+  User,
+  WSBroadcast,
+  WSCommand,
+  WSInit,
+  WSPing,
+} from './types';
+import { base64regex, fromBase64, htmlToDiscordMarkdown, linkRegExp, logger, splitLargeMessage } from './utils';
 
 export class Bot {
   user: User;
@@ -332,14 +332,16 @@ export class Bot {
         description: intent.description,
         type: 1,
         integration_types: [0, 1],
-        options: Object.values(intent.parameters)?.map((param) => {
-          return {
-            name: param.name,
-            description: param.description,
-            required: param.required,
-            type: this.getParameterType(param.type as ParameterType),
-          };
-        }),
+        options: intent.parameters
+          ? Object.values(intent.parameters)?.map((param) => {
+              return {
+                name: param.name,
+                description: param.description,
+                required: param.required,
+                type: this.getParameterType(param.type as ParameterType),
+              };
+            })
+          : [],
       });
     }
 
