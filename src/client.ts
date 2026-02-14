@@ -60,14 +60,16 @@ client.on('interactionCreate', async (interaction: Interaction<CacheType>) => {
 });
 
 client.on('messageCreate', async (message: DiscordMessage) => {
-  const msg = await bot.convertMessage(message);
-  const data: WSMessage = {
-    bot: 'polaris',
-    platform: 'discord',
-    type: 'message',
-    message: msg,
-  };
-  ws.send(JSON.stringify(data));
+  if (message.author.id !== client.user.id) {
+    const msg = await bot.convertMessage(message);
+    const data: WSMessage = {
+      bot: 'polaris',
+      platform: 'discord',
+      type: 'message',
+      message: msg,
+    };
+    ws.send(JSON.stringify(data));
+  }
 });
 
 const serverUrl = process.env.SERVER;
