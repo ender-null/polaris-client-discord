@@ -1,8 +1,8 @@
+import { CacheType, Client, Message as DiscordMessage, GatewayIntentBits, Interaction, Partials } from 'discord.js';
 import WebSocket from 'ws';
 import { Bot } from './bot';
 import { WSMessage } from './types';
 import { catchException, logger } from './utils';
-import { Client, GatewayIntentBits, Message as DiscordMessage, Partials, Interaction, CacheType } from 'discord.js';
 
 let bot: Bot;
 let ws: WebSocket;
@@ -77,7 +77,12 @@ const serverUrl = process.env.SERVER;
 const poll = () => {
   logger.info('Starting polling...');
   const userId = client.user.id;
-  ws = new WebSocket(`${serverUrl}?platform=discord&accountId=${userId}`);
+  ws = new WebSocket(`${serverUrl}?platform=discord&accountId=${userId}`, {
+    headers: {
+      'CF-Access-Client-Id': process.env.CF_ACCESS_CLIENT_ID,
+      'CF-Access-Client-Secret': process.env.CF_ACCESS_CLIENT_SECRET,
+    },
+  });
   bot = new Bot(ws, client);
   client.user.setPresence({
     status: 'idle',

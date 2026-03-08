@@ -346,7 +346,11 @@ export class Bot {
     }
 
     const rest = new REST({ version: '10' }).setToken(this.config.apiKeys.discordBotToken);
-    await rest.put(Routes.applicationCommands(this.config.apiKeys.discordClientId.toString()), { body: commands });
+    await rest
+      .put(Routes.applicationCommands(this.config.apiKeys.discordClientId.toString()), { body: commands })
+      .catch((error) => {
+        logger.error(error);
+      });
   }
 
   getParameterType(type: ParameterType): number {
